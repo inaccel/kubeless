@@ -1,0 +1,17 @@
+FROM inaccel/cli
+
+FROM python:3.7
+
+RUN pip install \
+	bottle==0.12.13 \
+	cherrypy==8.9.1 \
+	prometheus_client \
+	wsgi-request-logger
+
+ADD kubeless.py /
+
+COPY --from=0 /bin/inaccel /usr/bin/inaccel
+
+USER 1000
+
+ENTRYPOINT ["python", "/kubeless.py"]
