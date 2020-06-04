@@ -33,7 +33,6 @@ $ kubectl delete pod -n kubeless -l kubeless=controller
     spec:
       deps: |
         inaccel-keras
-        scikit-image
         tensorflow
       function: https://raw.githubusercontent.com/inaccel/kubeless/master/runtimes/python/examples/ResNet50.py
       function-content-type: url
@@ -56,5 +55,5 @@ $ kubectl delete pod -n kubeless -l kubeless=controller
 
     ```sh
     kubeless function call resnet50 \
-    	--data '[https://github.com/inaccel/keras/raw/master/examples/data/dog.jpg, https://github.com/inaccel/keras/raw/master/examples/data/elephant.jpg]'
+    	--data '["https://github.com/inaccel/keras/raw/master/examples/data/dog.jpg", "https://github.com/inaccel/keras/raw/master/examples/data/elephant.jpg"]'
     ```
