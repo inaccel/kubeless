@@ -49,8 +49,8 @@ def predict(request):
 
         return str(decode_predictions(preds, top=1))
     except BadRequest:
-        return "ERROR: ResNet50.predict: Invalid JSON data"
+        return BadRequest("ResNet50.predict: Invalid JSON data")
     except requests.exceptions.InvalidURL:
-        return "ERROR: ResNet50.predict: Invalid URL(s)"
+        return BadRequest("ResNet50.predict: Invalid URL(s)")
     except:
-        return "ERROR: ResNet50.predict: Internal Error"
+        return InternalServerError
