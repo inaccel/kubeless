@@ -22,7 +22,7 @@ def fetch_img(img_url):
         if not ext:
             ext = _type
     else:
-        raise requests.exceptions.InvalidURL("Given URL is not of Content-Type image")
+        raise requests.exceptions.InvalidURL()
 
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as img_file:
@@ -41,15 +41,16 @@ def predict(request):
     try:
         data = request.get_json(force=True)
 
-        if data:
-            model = ResNet50(weights='imagenet')
+        model = ResNet50(weights='imagenet')
 
-            images = np.vstack(list(map(preprocess_input, data)))
+        images = np.vstack(list(map(preprocess_input, data)))
 
-            preds = model.predict(images)
+        preds = model.predict(images)
 
-            return str(decode_predictions(preds, top=1))
-        else:
-            return ""
+        return str(decode_predictions(preds, top=1))
     except BadRequest:
-        return "No valid input JSON data!"
+        return "ERROR: ResNet50.predict: Invalid JSON data"
+    except requests.exceptions.InvalidURL:
+        return "ERROR: ResNet50.predict: Invalid URL(s)"
+    except:
+        return "ERROR: ResNet50.predict: Internal Error"
