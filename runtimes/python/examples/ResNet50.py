@@ -1,4 +1,3 @@
-import json
 import mimetypes
 import numpy as np
 import os
@@ -9,13 +8,15 @@ import tempfile
 from contextlib import contextmanager
 from inaccel.keras.applications.resnet50 import decode_predictions, ResNet50
 from inaccel.keras.preprocessing.image import load_img
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, InternalServerError
 
 @contextmanager
 def fetch_img(img_url):
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:76.0) Gecko/20100101 Firefox/76.0'}
-    img = requests.get(img_url, headers=headers, stream=True)
-
+    try:
+        img = requests.get(img_url, headers=headers, stream=True)
+    except:
+        raise requests.exceptions.InvalidURL()
     content, _type = img.headers['Content-Type'].split('/')
     if content == 'image':
         ext = mimetypes.guess_extension(img.headers['Content-Type'])
@@ -37,9 +38,11 @@ def preprocess_input(img_url):
     with fetch_img(img_url) as img_file:
         return np.expand_dims((load_img(img_file, target_size=(224, 224))), axis=0)
 
-def predict(request):
+def predict(event, context):
     try:
-        data = request.get_json(force=True)
+        data = event['json']
+        if data is None or not data:
+            return BadRequest("ResNet50.predict: Invalid JSON data")
 
         model = ResNet50(weights='imagenet')
 
@@ -48,9 +51,7 @@ def predict(request):
         preds = model.predict(images)
 
         return str(decode_predictions(preds, top=1))
-    except BadRequest:
-        return BadRequest("ResNet50.predict: Invalid JSON data")
     except requests.exceptions.InvalidURL:
         return BadRequest("ResNet50.predict: Invalid URL(s)")
     except:
-        return InternalServerError
+        return InternalServerError("ResNet50.predict: FPGA acceleration failed")

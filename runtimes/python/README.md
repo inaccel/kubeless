@@ -31,23 +31,37 @@ $ kubectl delete pod -n kubeless -l kubeless=controller
         function: resnet50
       name: resnet50
     spec:
-      deps: |
-        inaccel-keras
-        tensorflow
-      function: https://raw.githubusercontent.com/inaccel/kubeless/master/runtimes/python/examples/ResNet50.py
+      # deps: |
+      #   inaccel-keras
+      #   tensorflow
+      function: https://raw.githubusercontent.com/inaccel/kubeless/dev/runtimes/python/examples/ResNet50.py
       function-content-type: url
       handler: ResNet50.predict
       deployment:
         spec:
           template:
             spec:
-              containers:
-              - args:
+              initContainers:
+              - image: inaccel/cli
+                args:
+                - bitstream
+                - install
                 - https://store.inaccel.com/artifactory/bitstreams/xilinx/u250/xdma_201830.2/xilinx/com/researchlabs/1.1/1resnet50
-                resources:
+                volumeMounts:
+                - name: inaccel
+                  mountPath: /var/lib/inaccel
+              containers:
+              - resources:
                   limits:
                     xilinx/u250: 1
-      runtime: inaccel_python3.6
+                volumeMounts:
+                - name: inaccel
+                  mountPath: /var/lib/inaccel
+              volumes:
+              - name: inaccel
+                csi:
+                  driver: inaccel
+      runtime: inaccel_python
     EOF
     ```
 
@@ -55,5 +69,5 @@ $ kubectl delete pod -n kubeless -l kubeless=controller
 
     ```sh
     kubeless function call resnet50 \
-    	--data '["https://github.com/inaccel/keras/raw/master/examples/data/dog.jpg", "https://github.com/inaccel/keras/raw/master/examples/data/elephant.jpg"]'
+        --data '["https://github.com/inaccel/keras/raw/master/examples/data/dog.jpg", "https://github.com/inaccel/keras/raw/master/examples/data/elephant.jpg"]'
     ```
